@@ -1,0 +1,54 @@
+{
+ "name": "flare",
+ "depth": 1,
+ "size": 45000,
+ "children": [
+  {
+   "name": "analytics",
+   "depth": 2,
+   "size": 33700,
+   "children": [
+    {
+     "name": "cluster",
+     "depth": 3,
+     "size": 9700,
+     "children": [
+      {"name": "AgglomerativeCluster", "size": 4000, "depth": 4},
+      {"name": "CommunityStructure", "size": 2000, "depth": 4},
+      {"name": "HierarchicalCluster", "size": 3000, "depth": 4},
+      {"name": "MergeEdge", "size": 700, "depth": 4}
+     ]
+    },
+    {
+     "name": "graph",
+     "depth": 3,
+     "size": 21000,
+     "children": [
+      {"name": "BetweennessCentrality", "size": 4000,"depth": 4},
+      {"name": "LinkDistance", "size": 5000,"depth": 4},
+      {"name": "MaxFlowMinCut", "size": 7000,"depth": 4},
+      {"name": "ShortestPaths", "size": 3000,"depth": 4},
+      {"name": "SpanningTree", "size": 2000,"depth": 4}
+     ]
+    },
+    {
+     "name": "optimization",
+     "depth": 3,
+     "size": 3000,
+     "children": [
+      {"name": "AspectRatioBanker", "size": 3000,"depth": 4}
+     ]
+    }
+   ]
+  },
+  {
+  "name": "anamyers",
+   "depth": 2,
+   "size": 12000,
+   "children": [
+     {"name": "AspectRatio1", "size": 3000,"depth": 3},
+     {"name": "Aspect2", "size": 9000,"depth": 3}
+   ]
+  }
+ ]
+}

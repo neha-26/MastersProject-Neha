@@ -1,0 +1,588 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+	<title>Force-Directed Graph</title>
+<style>
+
+.node {
+  cursor: pointer;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+.link {
+  fill: none;
+  stroke: #9ecae1;
+  stroke-width: 1.5px;
+}
+
+</style>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+ </head>
+  <body>
+  <h2>Your name is ${rootJ}</h2>
+  
+  <script>
+   var rootJ = "[[${rootJ}]]";
+  console.log("rootJ : "+rootJ);
+  </script>
+  
+<script type="text/javascript">
+
+var width = 1200,
+    height = 600,
+    root;
+
+var force = d3.layout.force()
+    .gravity(.02)
+    .charge(function(d) { return d._children ? -d.size / 100 : -30; })
+    .linkDistance(function(d) { return d.target._children ? 220 : 60; })
+    .size([width, height])
+    .on("tick", tick);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var link = svg.selectAll(".link"),
+    node = svg.selectAll(".node");
+    
+var fill = d3.scale.category10();
+
+function getDepth(n) { return n.depth; }
+
+//var color = d3.scale.linear().domain([-2, 4]).range(["#252525", "#cccccc"]), //This is used to scale the gray color based on the propertyValue
+ var groupHullColor = "#e7cb94",  //d3.scale.category10(),
+    subgroupHullColor = " #9ecae1",
+    subsubgroupHullColor = "#ff9896";
+ 
+ var O_groups = [[14,17]];
+ var O_subgroups = [[17,15,16],[14,5,11,13]];
+// var subgroups = [[15,16],[5,11,13]];
+ var O_subsubgroups = [[13,12],[5,1,2,3,4],[11,6,7,8,9,10]]; 
+ groups = O_groups.slice();
+ subgroups = O_subgroups.slice();
+ //subsubgroups = O_subsubgroups.slice();
+ subsubgroups = [];
+
+var minNodeSize = 2
+//function radiusOf(element) {return (minNodeSize + (8 * Math.sqrt(element.depth))) };
+function radiusOf(element) {return (minNodeSize + (8 * Math.sqrt(2))) };
+
+var groupPath = function(d) {
+    var fakePoints = [];     
+    d.forEach(function(element) { fakePoints = fakePoints.concat([   // "0.7071" is the sine and cosine of 45 degree for corner points.
+           [(element.x), (element.y + (radiusOf(element) - minNodeSize))],
+           [(element.x + (0.7071 * (radiusOf(element) - minNodeSize))), (element.y + (0.7071 * (radiusOf(element) - minNodeSize)))],
+           [(element.x + (radiusOf(element) - minNodeSize)), (element.y)],
+           [(element.x + (0.7071 * (radiusOf(element) - minNodeSize))), (element.y - (0.7071 * (radiusOf(element) - minNodeSize)))],
+           [(element.x), (element.y - (radiusOf(element) - minNodeSize))],
+           [(element.x - (0.7071 * (radiusOf(element) - minNodeSize))), (element.y - (0.7071 * (radiusOf(element) - minNodeSize)))],
+           [(element.x - (radiusOf(element) - minNodeSize)), (element.y)],
+           [(element.x - (0.7071 * (radiusOf(element) - minNodeSize))), (element.y + (0.7071 * (radiusOf(element) - minNodeSize)))]
+    ]); })
+    return "M" + d3.geom.hull( fakePoints ).join("L") + "Z";
+};
+
+var groupHullFill = function(d, i) { return groupHullColor; };
+var subgroupHullFill = function(d, i) { return subgroupHullColor; };
+var subsubgroupHullFill = function(d, i) { return subsubgroupHullColor; };
+
+var groupNodes,subgroupNodes,subsubgroupNodes;
+
+
+//d3.json("readme.json", function(error, json) {
+//  if (error) throw error;
+
+  //root = json;
+ // update();
+ 
+ root = {
+		 "name": "flare",
+		 "depth": 1,
+		 "size": 45000,
+		 "children": [
+		  {
+		   "name": "analytics",
+		   "depth": 2,
+		   "size": 33700,
+		   "children": [
+		    {
+		     "name": "cluster",
+		     "depth": 3,
+		     "size": 9700,
+		     "children": [
+		      {"name": "AgglomerativeCluster", "size": 4000, "depth": 4},
+		      {"name": "CommunityStructure", "size": 2000, "depth": 4},
+		      {"name": "HierarchicalCluster", "size": 3000, "depth": 4},
+		      {"name": "MergeEdge", "size": 700, "depth": 4}
+		     ]
+		    },
+		    {
+		     "name": "graph",
+		     "depth": 3,
+		     "size": 21000,
+		     "children": [
+		      {"name": "BetweennessCentrality", "size": 4000,"depth": 4},
+		      {"name": "LinkDistance", "size": 5000,"depth": 4},
+		      {"name": "MaxFlowMinCut", "size": 7000,"depth": 4},
+		      {"name": "ShortestPaths", "size": 3000,"depth": 4},
+		      {"name": "SpanningTree", "size": 2000,"depth": 4}
+		     ]
+		    },
+		    {
+		     "name": "optimization",
+		     "depth": 3,
+		     "size": 3000,
+		     "children": [
+		      {"name": "AspectRatioBanker", "size": 3000,"depth": 4}
+		     ]
+		    }
+		   ]
+		  },
+		  {
+		  "name": "anamyers",
+		   "depth": 2,
+		   "size": 12000,
+		   "children": [
+		     {"name": "AspectRatio1", "size": 3000,"depth": 3},
+		     {"name": "Aspect2", "size": 9000,"depth": 3}
+		   ]
+		  }
+		 ]
+		}
+ 
+  var nd = flatten(root); //to set ids
+  // This takes the list of group members and converts into lists lof lists of nodes
+  groupNodes = groups.map(function(group,index){
+      	return group.map(function(member){return nd[member-1] });
+  	});
+  subgroupNodes = subgroups.map(function(group,index){
+      	return group.map(function(member){return nd[member-1] });
+  	});
+  subsubgroupNodes = subsubgroups.map(function(group,index){
+      	return group.map(function(member){return nd[member-1] });
+  	});
+  //console.log("groupNodes : " + groupNodes);
+  setParents(root, null);
+  collapseAll(root);
+  //root.children = root._children;
+ // root._children = null;
+  update();
+  
+//});
+  var nodes,links;
+ 
+function update() {
+	 
+//alert("nameX : "+nameX);
+
+   nodes = flatten(root),
+      links = d3.layout.tree().links(nodes);
+
+  // Restart the force layout.
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+  
+//this updates the convex hulls
+  svg.selectAll("group").remove();
+  
+//Update the links…
+  link = svg.selectAll("line.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Exit any old links.
+  link.exit().remove();
+
+  // Enter any new links.
+  link.enter().insert("line", ".node")
+      .attr("class", "link")
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  // Update the nodes…
+  node = node.data(nodes, function(d) { return d.id; })
+  			.style("fill", color)
+
+  // Exit any old nodes.
+  node.exit().remove();
+  			
+  //new code
+  node.transition()
+     .attr("r", function(d) { return d.children ? 8.5 : Math.sqrt(d.size) / 10; })
+     .style("stroke", function(d) { return 'steelblue'})
+     .style("stroke-width", function(d) { if (d.children) { return 2.5 } else { return 0.5 }})
+	 .style("stroke-dasharray",  function(d) { if (d.children) { return "10,3" } else { return "0,0" }});// make the stroke dashed
+
+  // Enter any new nodes.
+  node.enter().append("circle")
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", function(d) { return d.children ? 8.5 : Math.sqrt(d.size) / 10;})
+    // .style("fill", color)
+      .on("click", click)
+      .call(force.drag);
+  
+  node.append("title")
+  .text(function(d) { return d.name });
+  
+}
+
+var flag = true;
+function tick() {
+	//alert("hhh");
+	
+// if(groupPath.length > 0){
+   nodes = flatten(root),
+      links = d3.layout.tree().links(nodes);
+  	
+  // this updates the convex hulls
+ /*   var a = function(d){if(d.children) return false;}
+  if(!a){
+  svg.selectAll("group").remove();}  */
+ // svg.selectAll("group").remove();
+ // svg.selectAll("subgroup").remove();
+ // svg.selectAll("subsubgroup").remove();
+  svg.selectAll("path").remove();
+
+  svg.selectAll("path#group")
+    .data(groupNodes)
+    //  .attr("d", drawCluster)
+      .enter().insert("path", "circle")
+       .attr("class", "group")
+       .style("fill", groupHullFill)
+     .style("stroke", groupHullFill)
+      .style("stroke-width", 45)
+      .style("stroke-linejoin", "round")
+      .style("opacity", .5) 
+  	.attr("ID","group")
+      .attr("d", groupPath);
+  
+  svg.selectAll("path#subgroup")
+  .data(subgroupNodes)
+  .enter().insert("path", "circle")
+    .style("fill", subgroupHullFill)
+    .style("stroke", subgroupHullFill)
+    .style("stroke-width", 25)
+    .style("stroke-linejoin", "round")
+    .style("opacity", .2)
+	.attr("ID","subgroup")
+    .attr("d", groupPath);
+
+svg.selectAll("path#subsubgroup")
+  .data(subsubgroupNodes)
+  .enter().insert("path", "circle")
+    .style("fill", subsubgroupHullFill)
+    .style("stroke", subsubgroupHullFill)
+    .style("stroke-width", 15)
+    .style("stroke-linejoin", "round")
+    .style("opacity", 0.2)
+	.attr("ID","subsubgroup")
+    .attr("d", groupPath);
+    
+// this redraws the links on top of the convex hulls
+ link = svg.selectAll("line.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Exit any old links.
+  link.exit().remove();
+
+  // Enter any new links.
+  link.enter().insert("line", ".node")
+      .attr("class", "link")
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  // Update the nodes…
+  node = node.data(nodes, function(d) { return d.id; })
+  			.style("fill", color);
+
+  // Exit any old nodes.
+  node.exit().remove();
+
+  // Enter any new nodes.
+  node.enter().append("circle")
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", function(d) { return d.children ? 8.5 : Math.sqrt(d.size) / 10;})
+     //.style("fill", color)
+      .on("click", click)
+      .call(force.drag);
+  
+  node.append("title")
+  .text(function(d) { return d.name });
+  
+//	}
+link.attr("x1", function(d) { return d.source.x; })
+    .attr("y1", function(d) { return d.source.y; })
+    .attr("x2", function(d) { return d.target.x; })
+    .attr("y2", function(d) { return d.target.y; });
+
+node.attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; });
+    
+}
+
+// Color leaf nodes orange, and packages white or blue.
+function color(d) {
+  return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
+}
+
+var temp_subsubgroup = subsubgroups;
+// Toggle children on click.
+function click(d) {
+	
+  if (!d3.event.defaultPrevented) {
+    if (d.children) {
+     // alert("childern");//collapse
+      d._children = d.children;
+      d.children = null;
+     
+      /*  var groups = [[14,17]];
+ 		  var subgroups = [[17,15,16],[14,5,11,13]];
+ 		  var subsubgroups = [[13,12],[5,1,2,3,4],[11,6,7,8,9,10]];  */
+      
+        if(d.depth == 1){
+        	
+    		groupNodes = [];
+    		subgroupNodes = [];
+    		subsubgroupNodes = temp_subsubgroup.slice();
+    		
+    	}else if(d.depth == 2){
+    		//working code
+    		/* subgroupNodes = [];
+    		subsubgroupNodes = []; */
+    		
+    		console.log("***[collapse] current subsubgroups : "+subsubgroups);
+    		//temp_subsubgroup = subsubgroups.slice();
+    		//handle subsubgroup first
+    		  for( var i = 0; i < subgroups.length; i++){ 
+    			if ( subgroups[i][0] == d.id ) {
+    				for( var j = 0; j < subgroups[i].length; j++){ //if parent(clicked node) if not present as the first node in the array
+    					for( var k = 0; k < subsubgroups.length; k++){
+    						if ( subgroups[i][j] == subsubgroups[k][0] ) {
+ 				  	 			subsubgroups.splice(k, 1); 
+ 				  	 			//break;
+    						}
+    					}
+ 			  	 	}
+    				break;
+    			}
+ 			}  
+    		console.log("**[collapse] final subsubgroups : "+subsubgroups);
+    		//temp_subsubgroup = subsubgroups.slice();
+    		console.log("[collapse] temp_subsubgroup : "+ temp_subsubgroup);
+    		//subsubgroupNodes = subsubgroups.map(function(group,index){
+    		subsubgroupNodes = temp_subsubgroup.map(function(group,index){
+              	return group.map(function(member){return nd[member-1] });
+          	});
+    		// subsubgroupNodes = [];
+    		
+    		//handle subgroup---can merge above for loop for efficiency
+    		for( var i = 0; i < subgroups.length; i++){ 
+    			   if ( subgroups[i][0] == d.id) {//[0] meanse parent(clicked node) is present as first element in the array
+    				   subgroups.splice(i, 1); 
+    				   break;
+    			   }
+    		}
+    		console.log("depth 2 - collapse subgroups : "+subgroups);
+    		//subgroups = [[14,5,11,13]];
+    		subgroupNodes = subgroups.map(function(group,index){
+      			return group.map(function(member){return nd[member-1] });
+  			 });
+    		
+    		subsubgroupNodes = subsubgroups.map(function(group,index){
+              	return group.map(function(member){return nd[member-1] });
+          	});
+    		
+    		
+    	}else if(d.depth == 3){
+    		//working
+    		//subsubgroupNodes = [];
+    		subsubgroups = temp_subsubgroup.slice();
+    		console.log("depth 3 - collapse ** current subsubgroups : "+subsubgroups);
+    		for( var i = 0; i < subsubgroups.length; i++){ 
+  			   if ( subsubgroups[i][0] == d.id) {
+  				  subsubgroups.splice(i, 1); 
+  				   break;
+  			   }
+  			}
+    		console.log("depth 3 - collapse **final subsubgroups : "+subsubgroups);
+    		 temp_subsubgroup = subsubgroups.slice();
+    		 console.log("depth 3 - collapse **final temp_subsubgroup : "+temp_subsubgroup);
+    		subsubgroupNodes = subsubgroups.map(function(group,index){
+              	return group.map(function(member){return nd[member-1] });
+          	});
+    		
+    	}
+        
+        
+    } else {
+      //alert("_childern");//expand
+      d.children = d._children;
+      d._children = null;
+     // svg.selectAll("group").remove();
+      
+  		//new code
+  		if(d.depth == 1){
+     		 groupNodes = groups.map(function(group,index){
+        		return group.map(function(member){console.log(member); return nd[member-1] });
+    		});
+     		subgroupNodes = subgroups.map(function(group,index){
+      			return group.map(function(member){return nd[member-1] });
+  			});
+     		
+     		 subsubgroups = temp_subsubgroup.slice();
+     		 console.log("[expant] parent subsubgroups : "+subsubgroups);
+     		 subsubgroupNodes = subsubgroups.map(function(group,index){
+             	return group.map(function(member){return nd[member-1] });
+         	});
+      
+  		}else if(d.depth == 2){
+  			 for( var i = 0; i < O_subgroups.length; i++){ 
+    			   if ( O_subgroups[i][0] == d.id)
+    				  // console.log(" bollean : "+subgroups.includes(O_subgroups[i]));
+    				   if(!subgroups.includes(O_subgroups[i])) {
+    					   subgroups.push(O_subgroups[i]); 
+    				   break;
+    			   }
+    		 } 
+  			 subgroupNodes = subgroups.map(function(group,index){
+        		return group.map(function(member){return nd[member-1] });
+    		});
+  			 
+  			 //new code
+  			 //subsubgroups = [];
+  			 console.log("***[expand] current subsubgroups : "+subsubgroups);
+  		 	/*  for( var i = 0; i < subgroups.length; i++){ 
+    			if ( subgroups[i][0] == d.id ) {
+    				for( var j = 0; j < subgroups[i].length; j++){ //if parent(clicked node) if not present as the first node in the array
+    					for( var k = 0; k < O_subsubgroups.length; k++){
+    						if ( subgroups[i][j] == O_subsubgroups[k][0] ) {
+    							 if(!subsubgroups.includes(O_subsubgroups[k])) {
+ 				  	 				subsubgroups.push(O_subsubgroups[k]); 
+ 				  	 			//break;
+    							 }
+    						}
+    					}
+ 			  	 	}
+    				break;
+    			}
+ 			}  */
+  		 	 console.log("***[expand] final subsubgroups : "+subsubgroups);
+ 			 console.log("[expand] temp_subsubgroup : "+ temp_subsubgroup);
+  			 subsubgroupNodes = temp_subsubgroup.map(function(group,index){
+  			 //subsubgroupNodes = subsubgroups.map(function(group,index){
+         		return group.map(function(member){return nd[member-1] });
+     		});
+  			 
+  		}else{
+  			// subsubgroups = [];
+  			subsubgroups = temp_subsubgroup.slice();
+  			console.log("[expand depth 3] temp_subsubgroup: "+temp_subsubgroup)
+  			//subsubgroups.push[temp_subsubgroup];
+  			//merge_array(temp_subsubgroup, subsubgroups)
+  			//console.log("[expand depth 3] push: "+subsubgroups)
+  			 for( var i = 0; i < O_subsubgroups.length; i++){ 
+   			   if ( O_subsubgroups[i][0] == d.id){
+   				   //console.log(" bollean : "+subsubgroups.includes(O_subsubgroups[i]));
+   				   if(!subsubgroups.includes(O_subsubgroups[i])) {
+   				 	 subsubgroups.push(O_subsubgroups[i]); 
+   				     break;
+   				   }
+   			   }
+   			 } 
+  			 console.log("[EXPAND] subsubgroups : "+subsubgroups);
+  			 temp_subsubgroup = subsubgroups.slice();
+  			console.log("[EXPAND] temp_subsubgroup : "+temp_subsubgroup);
+  			 /* if(!temp_subsubgroup.includes(subsubgroups)) {
+  				temp_subsubgroup.push(O_subsubgroups); 
+			 } */
+  			 
+   			 subsubgroupNodes = subsubgroups.map(function(group,index){
+        		return group.map(function(member){return nd[member-1] });
+    		});
+  		}
+     //end
+     
+    }
+    update();
+  }
+  
+	//}//else new
+}
+
+
+//Returns a list of all nodes under the root.
+function flatten(root) {
+  var nodes = [], i = 0;
+
+  function recurse(node) {
+    //if (node.children) node.size = node.children.reduce(function(p, v) { return p + recurse(v); }, 0);
+    if (node.children) node.children.forEach(recurse);
+    if (!node.id) node.id = ++i;
+    nodes.push(node);
+    return node.size;
+  }
+
+  root.size = recurse(root);
+  console.log("nodes : - : " + nodes);
+  return nodes;
+}
+
+
+function collapseAll(d){
+	//svg.selectAll("path").remove();
+	if (d.children){
+        d.children.forEach(collapseAll);
+        d._children = d.children;
+        d.children = null;
+    }
+    else if (d._children){
+        d._children.forEach(collapseAll);
+        d.children = d._children;
+        d._children = null;
+    }
+	
+}
+
+function setParents(d, p){
+  d._parent = p;
+  if (d.children) {
+      d.children.forEach(function(e){ setParents(e,d);});
+  } else if (d._children) {
+      d._children.forEach(function(e){ setParents(e,d);});
+  }
+}
+
+function merge_array(array1, array2) {
+    var result_array = [];
+    var arr = array1.concat(array2);
+    var len = arr.length;
+    var assoc = {};
+
+    while(len--) {
+        var item = arr[len];
+
+        if(!assoc[item]) 
+        { 
+            result_array.unshift(item);
+            assoc[item] = true;
+        }
+    }
+
+    return result_array;
+}
+
+</script>
+</body>
+</html>
