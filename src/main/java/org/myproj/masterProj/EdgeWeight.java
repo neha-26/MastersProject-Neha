@@ -16,12 +16,13 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.jgrapht.Graph;
+import org.jgrapht.GraphTests;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.util.SupplierUtil;
 
-public class EdgeWeight {
+public class EdgeWeight extends  GraphTests {
 	
 	static Graph<String, DefaultWeightedEdge> graph = null;
 	static DecimalFormat df = new DecimalFormat("##.#####");
@@ -69,6 +70,10 @@ public class EdgeWeight {
 			e1.printStackTrace();
 		}
 
+		//check weakly connected component in original graph
+		EdgeWeight gt = new EdgeWeight();
+		gt.isWeaklyConnected(graph);
+		
 		// Parent node
 		Graph<String, DefaultWeightedEdge> subgraph = deleteEdge();
 		
@@ -89,20 +94,6 @@ public class EdgeWeight {
 		System.out.println(" Graph edges : "+  totalEdges);
 		int random_vertex = (int) (VERTEX_PERCENTAGE * totalVertex);
 		System.out.println(" random_vertex size : "+ random_vertex);
-		
-	
-		//double weight[] = new double[totalVertex];
-		 double weight[] = new double[graph.edgeSet().size()];
-		//for (int i = 0; i < totalVertex; i++) {
-			//weight[i] = 0.0;
-		//}
-		
-		//fetch index of all the vertex from the array
-		//List<Object> ls = Arrays.asList(vertAry); // ls
-		//int index[] = new int[totalVertex];
-		/*
-		 * for (int i = 0; i < totalVertex; i++) { index[i] = ls.indexOf(vertAry[i]); }
-		 */
 		
 		int count = 0;
 		Set<Integer> rSet = generateRandomNumber(totalVertex,random_vertex);
@@ -131,15 +122,7 @@ public class EdgeWeight {
 				//System.out.println( u1 +" -> "+ v);
 				
 				//1st hop
-				/*if(u == u1) { //consider only source vertex
-					count++;
-					int indexOfV = ls.indexOf(v);
-					visited[indexOfV]=true;
-					weight[indexOfV] +=  Double.valueOf(df.format(1.0/degree));
-				}// 1st hop end
-				*/
 				double w = graph.getEdgeWeight((DefaultWeightedEdge) ed);
-				//System.out.println(" w :"+w);
 				w += Double.valueOf(df.format(1.0/degree));
 				graph.setEdgeWeight((DefaultWeightedEdge) ed, Double.valueOf(df.format(w)));
 				
@@ -176,7 +159,9 @@ public class EdgeWeight {
 		
 		//write output in file
 		 PrintWriter writer;
-		 int edgeCount = 0;
+		 int edgeCount = 0; 
+		 double weight[] = new double[graph.edgeSet().size()];
+		 // double weight[] = new double[edgeCount];
 			try {
 				writer = new PrintWriter("C:\\2019-Fall\\GA work\\outputEdgeWeight.txt", "UTF-8");
 					
@@ -187,8 +172,8 @@ public class EdgeWeight {
 					    	if(we > 0.0) {
 					    		weight[i] = we;
 					    		edgeCount++;
-					    		 writer.println(e +" -> "+ we);
-					    		 i++;
+					    		writer.println(e +" -> "+ we);
+					    		i++;
 					    	}
 					    	//i++;
 					    }
@@ -210,7 +195,7 @@ public class EdgeWeight {
 			System.out.println("MEDIAN = " + median); 
 			
 			//delete edge from graph for w > threshold	
-			int i = 0;
+			//int i = 0;
 			List<DefaultWeightedEdge> edgeList = new ArrayList<DefaultWeightedEdge>();
 		    for(DefaultWeightedEdge e : graph.edgeSet()) {
 		    	double we = graph.getEdgeWeight(e);
@@ -218,7 +203,7 @@ public class EdgeWeight {
 		    	if(we > (0.3)) {
 		    		edgeList.add(e);
 		    	}
-		    	i++;
+		    	//i++;
 		    }
 		    System.out.println(" No. of egdes to be deleted : "+ edgeList.size());
 		    
@@ -234,8 +219,21 @@ public class EdgeWeight {
 	}
 	
 	// Function for calculating median 
-    public static double findMedian(double a[], int n) 
+    public static double findMedian(double weight[], int n) 
     { 
+    	System.out.println(" Calculate median : ");
+    	System.out.println(" weight[] size : "+ weight.length);
+    	System.out.println(" n : "+ n);
+    	double a[] = new double[n];
+    	
+    	//weight array > 0.0
+		for(int i=0; i < weight.length; i++ ) {
+			if(weight[i] > 0.0) {
+				a[i] = weight[i];
+			}
+		}
+		System.out.println(" a[] size : "+ a.length);
+		
         // First we sort the array 
         Arrays.sort(a); 
   

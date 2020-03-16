@@ -187,34 +187,6 @@ public class KDegree_2 {
 	//static MultiValuedMap<Integer, ArrayList<Integer>> mainMap = new ArrayListValuedHashMap<>();
 	static MultiValuedMap<String, ArrayList<String>> mainMap = new ArrayListValuedHashMap<>();
 	
-	/*private static void createJSONDataPOJO(Graph<String, DefaultEdge> subgraph) {
-		List<Set<String>> ls = null;
-		ArrayList<Graph<String, DefaultEdge>> subgrapghList = null;
-		
-		while(subgraph.vertexSet().size() > MIN_SCC_SIZE) {
-		
-			boolean b = deleteNodesInSubgraph(graph);// delete node with k < 5
-			if(b) {
-				
-				ls = getConnectedComponentsList(graph);// find all SCC
-				subgrapghList = createSubGraph(ls);// get sub-graph for all SCC.size > 50
-				
-				if (subgrapghList.size() > 0) {
-					
-					System.out.println("Size of list : "+subgrapghList.size());
-					for (Graph<String, DefaultEdge> g : subgrapghList) {
-						
-						
-						
-					}
-					
-				}
-				
-			}
-		
-		}
-		
-	}*/
 	
 	private static void createJSONData(Graph<String, DefaultEdge> graph, int d, int i,int k, String parentP) {
 		System.out.println();
