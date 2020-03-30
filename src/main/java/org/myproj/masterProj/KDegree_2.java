@@ -63,12 +63,12 @@ public class KDegree_2 {
 
 		// File file = new File("C:\\2019-Fall\\GA work\\email-Enron.txt"); //directed graph
 		// File file = new File("C:\\2019-Fall\\GA work\\Wiki-Vote.txt");
-		// File file = new File("C:\\2019-Fall\\GA work\\com-amazon.ungraph.txt");
+		 File file = new File("C:\\2019-Fall\\GA work\\com-amazon.ungraph.txt");
 		//File file = new File("C:\\2019-Fall\\GA work\\com-dblp.ungraph.txt"); // undirected graph
 		// File file = new File("C:\\2019-Fall\\GA work\\CA-AstroPh.txt"); //directed graph
 		// File file = new File("C:\\2019-Fall\\GA work\\com-orkut.ungraph.txt");//memory error
 		
-		 File file = new File("C:\\2019-Fall\\GA work\\web-Google.txt\\web-Google.txt");//directed graph
+		 //File file = new File("C:\\2019-Fall\\GA work\\web-Google.txt\\web-Google.txt");//directed graph
 
 		Scanner sc;
 		try {
@@ -101,6 +101,10 @@ public class KDegree_2 {
 
 		System.out.println(" --main Map : "+ mainMap.toString());
 		createJSONFromMap();
+		
+		Instant finish = Instant.now();
+		long timeElapsed = Duration.between(start, finish).toMillis();//in millis
+		System.out.println(" *****total time in millis:"+ timeElapsed);
 		
 		// System.out.println(" FINAL JSON : "+ jo.toString());
 		PrintWriter writer;

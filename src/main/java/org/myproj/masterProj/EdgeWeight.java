@@ -17,16 +17,18 @@ import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.GraphTests;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.util.SupplierUtil;
 
-public class EdgeWeight extends  GraphTests {
+public class EdgeWeight {
 	
 	static Graph<String, DefaultWeightedEdge> graph = null;
-	static DecimalFormat df = new DecimalFormat("##.#####");
+	static DecimalFormat df = new DecimalFormat("#####.######");
 	static final double VERTEX_PERCENTAGE = 0.4;
+	static final double WEIGHT_THRESHOLD = 0.3;
 
 	public static void main(String[] args) {
 		Instant start = Instant.now();
@@ -71,15 +73,67 @@ public class EdgeWeight extends  GraphTests {
 		}
 
 		//check weakly connected component in original graph
-		EdgeWeight gt = new EdgeWeight();
-		gt.isWeaklyConnected(graph);
+		ConnectivityInspector<String, DefaultWeightedEdge> ci = new ConnectivityInspector<>(graph);
+
+		//System.out.println("isConnected : " + ci.isConnected());
+		List<Set<String>> ls = ci.connectedSets();
+		System.out.println(" No. of weakly connected component in ORIGINAL graph : " + ls.size());
+		//density of original graph
+		double density = density(graph.edgeSet().size(),graph.vertexSet().size());
+		System.out.println(" Density of ORIGINAL graph : "+ density);
 		
-		// Parent node
+		// Delete edges
 		Graph<String, DefaultWeightedEdge> subgraph = deleteEdge();
+		
+		ci = new ConnectivityInspector<>(subgraph);
+		ls = ci.connectedSets();
+		//System.out.println(" No. of weakly connected component in SUBGRAPH graph : " + ls.size());
+		
+		//density of subgraphs
+		int count = 0, wcc = 0; 
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter("C:\\2019-Fall\\GA work\\outputEdgeDensity.txt", "UTF-8");
+			for(Set<String> s : ls) {
+				
+				if(s.size() > 1) {
+					writer.println(" ********** New SSC BEGINS *******");
+					writer.println(" No. of nodes in subgraph : "+ s.size());
+					
+					
+					Graph<String, DefaultWeightedEdge> sgraph = createSubGraph(s);
+					//System.out.println(" Density of SUBGRAPH graph : "+ density(sgraph.edgeSet().size(),sgraph.vertexSet().size()));
+					double d = density(sgraph.edgeSet().size(),sgraph.vertexSet().size());
+					writer.println("Density : "+d);
+					if(d >= density) {
+						count++;
+					}else {
+						System.out.println("low density : "+ d);
+					}
+					wcc++;
+					writer.println(" ");
+				}
+				
+			}
+			writer.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		System.out.println(" No. of weakly connected component in SUBGRAPH graph : " + wcc);
+		System.out.println("*No.of WCC in subgrapgh with density higher the original graph : "+ count);
 		
 		Instant finish = Instant.now();
 		long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
 		System.out.println(" *****total time in millis:"+ timeElapsed);
+	}
+
+	private static double density(int edgeCount, int vertexCount) {
+		
+		double d = (edgeCount * 1.0)/(vertexCount * vertexCount);
+		
+		return Double.valueOf(df.format(d));
 	}
 
 	private static Graph<String, DefaultWeightedEdge> deleteEdge() {
@@ -101,11 +155,7 @@ public class EdgeWeight extends  GraphTests {
 		//for (int i = 0; i < tenPercent; i++) {
 		for (Integer randomVar:  rSet) {
 			
-			//System.out.println("----------------Random num : "+ i);
-			// randomNumbers[randomVar])
-			//int u = Integer.parseInt(vertAry[randomVar]);
 			Object uObj = vertAry[randomVar];
-			//System.out.println(" Current U : "+ uObj.toString());
 			String u = uObj.toString();
 			
 			visited[randomVar]=true;//index is set as true
@@ -154,7 +204,7 @@ public class EdgeWeight extends  GraphTests {
 				
 			}
 		}//main random num for loop ends
-		System.out.println(" count : "+ count);
+		//System.out.println(" count : "+ count);
 		
 		
 		//write output in file
@@ -200,7 +250,7 @@ public class EdgeWeight extends  GraphTests {
 		    for(DefaultWeightedEdge e : graph.edgeSet()) {
 		    	double we = graph.getEdgeWeight(e);
 		    	//if(we > (median - 0.08091)) {
-		    	if(we > (0.3)) {
+		    	if(we > (WEIGHT_THRESHOLD)) {
 		    		edgeList.add(e);
 		    	}
 		    	//i++;
@@ -222,8 +272,8 @@ public class EdgeWeight extends  GraphTests {
     public static double findMedian(double weight[], int n) 
     { 
     	System.out.println(" Calculate median : ");
-    	System.out.println(" weight[] size : "+ weight.length);
-    	System.out.println(" n : "+ n);
+    	//System.out.println(" weight[] size : "+ weight.length);
+    	//System.out.println(" n : "+ n);
     	double a[] = new double[n];
     	
     	//weight array > 0.0
@@ -232,7 +282,7 @@ public class EdgeWeight extends  GraphTests {
 				a[i] = weight[i];
 			}
 		}
-		System.out.println(" a[] size : "+ a.length);
+		//System.out.println(" a[] size : "+ a.length);
 		
         // First we sort the array 
         Arrays.sort(a); 
@@ -253,5 +303,40 @@ public class EdgeWeight extends  GraphTests {
             while (set.add(random.nextInt(NUMBER_RANGE)) != true);
         }
         return set;
+	}
+	
+	private static Graph<String, DefaultWeightedEdge> createSubGraph(Set<String> ss) {
+
+		Graph<String, DefaultWeightedEdge> subgraph = null;
+
+		subgraph = GraphTypeBuilder
+				// .undirected()
+				.directed().allowingMultipleEdges(true).allowingSelfLoops(true)
+				.vertexSupplier(SupplierUtil.createStringSupplier())
+				//.edgeSupplier(SupplierUtil.createDefaultEdgeSupplier()).
+				.edgeClass(DefaultWeightedEdge.class)
+				.weighted(true).buildGraph();
+
+			for (Object se : ss) {
+				// System.out.println("*********vertex : "+ String.valueOf(se));
+				subgraph.addVertex(String.valueOf(se));
+
+				Set<DefaultWeightedEdge> edg = graph.edgesOf(String.valueOf(se));
+				for (Object s : edg) {
+					// System.out.println(" s : "+ s);
+					String u = graph.getEdgeSource((DefaultWeightedEdge) s);
+					String v = graph.getEdgeTarget((DefaultWeightedEdge) s);
+
+					if (ss.contains(u) && ss.contains(v) && subgraph.containsVertex(u) && subgraph.containsVertex(v)) {
+						subgraph.addEdge(u, v);
+					}
+				}
+			}
+
+			//System.out.println("SIZE of vertex set of subgraph : " + subgraph.vertexSet().size());
+
+			//System.out.println("SIZE of edge set of subgraph : " + subgraph.edgeSet().size());
+			
+		return subgraph;
 	}
 }
