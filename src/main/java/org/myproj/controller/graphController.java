@@ -28,26 +28,11 @@ import org.springframework.web.servlet.ModelAndView;
 public class graphController {
 
 	public GraphService graphService;
-	//public GraphEdgeWeightService graphEdgeService;
 	
-	/*
-	 * public graphController() {
-	 * 
-	 * }
-	 */
-
 	@Autowired
 	public graphController(GraphService graphService) {
 		this.graphService = graphService;
 	}
-	
-	
-	
-	/*
-	 * public graphController(GraphEdgeWeightService graphEdgeService) {
-	 * this.graphEdgeService = graphEdgeService; }
-	 */
-	 
 	
 	@ModelAttribute("myformSub")
 	   public FormSub getFormSub() {
@@ -55,21 +40,13 @@ public class graphController {
 	   }
 	
 	 @RequestMapping(value = "/index", method = RequestMethod.POST)
-    public ModelAndView index1(@RequestParam("file1") MultipartFile file,
+    public ModelAndView index(@RequestParam("file1") MultipartFile file,
     		@Valid @ModelAttribute("myformSub")FormSub formSub, 
            BindingResult result, ModelMap model) {
 		 System.out.println("approach "+ formSub.getApproach());
 		 System.out.println("file1 "+ formSub.getFile1());
 		 System.out.println("file : "+ file.getSize());
-		 /* if (result.hasErrors()) {
-        	System.out.println("########ERROR : "+ result.getErrorCount());
-        }
-		
-		 * System.out.println("name  "+ formSub.getK_start());
-		 * System.out.println("contactNumber "+ formSub.getK_increment());
-		 * System.out.println("id "+ formSub.getMIN_SCC_SIZE());
-		 * System.out.println("approach "+ formSub.getApproach());
-		 */
+		 
         if("kcore".equals(formSub.getApproach())) {
         	kcore(file,formSub,model);
         }else
@@ -118,14 +95,14 @@ public class graphController {
 	}
 
 	@RequestMapping(value ="/index",method=RequestMethod.GET)
-	public ModelAndView index(Model model) {
+	public ModelAndView indexPage(Model model) {
 		
 		ModelAndView mav = new ModelAndView("index");
 		return mav;
 	}
 
 	@RequestMapping(value = "/nodes", method = RequestMethod.GET, produces = "application/json")
-	public String test(@RequestParam(value = "nodeId", defaultValue = "111") String nodeId,
+	public String getChildNodes(@RequestParam(value = "nodeId", defaultValue = "111") String nodeId,
 			@RequestParam(value = "approach") String approach,
 			Model model) {
 		System.out.println("nodeId : "+ nodeId);
