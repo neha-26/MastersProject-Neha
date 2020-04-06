@@ -34,11 +34,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class GraphService {
 
-	static DecimalFormat df = new DecimalFormat("#####.######");
+	static DecimalFormat df = new DecimalFormat("#.######");
 	static Map<String, Integer> score = null;
 	static int totalVertice = 0;
 	static Graph<String, DefaultEdge> graph = null;
 	static Graph<String, DefaultWeightedEdge> graph1 = null;
+	static Graph<String, DefaultWeightedEdge> graph1Copy = null;
 	static HashMap<String, Integer> scoreMap = null;
 	static HashMap<Integer, Integer> rankMap = null;
 	static ArrayList<ArrayList<String>> groupArray = new ArrayList<ArrayList<String>>();
@@ -103,11 +104,11 @@ public class GraphService {
 		deleteNodes(graph);
 		System.out.println("**AFTER edge set of graph : " + graph.edgeSet().size());
 
+		List<Set<String>> ls = getConnectedComponentsList(graph);
+		
 		Instant finish = Instant.now();
 		long timeElapsed = Duration.between(start, finish).toMillis(); // in millis
 		System.out.println(" *****total time in millis:" + timeElapsed);
-
-		List<Set<String>> ls = getConnectedComponentsList(graph);
 
 		// create jsonArray
 		JSONArray jAry = new JSONArray();
@@ -144,9 +145,13 @@ public class GraphService {
 		return jAry;
 	}
 
-private static double density(int edgeCount, int vertexCount) {
-		
-		double d = (edgeCount * 1.0)/(vertexCount * vertexCount);
+	private static double density(int edgeCount, int vertexCount) {
+		/*System.out.println("### Density:");
+		System.out.println("edgeCount : "+ edgeCount);
+		System.out.println("edgeCount * 1.0 : "+ (edgeCount * 1.0));
+		System.out.println("vertexCount : "+ vertexCount);
+		System.out.println("vertexCount square : "+ Math.pow(vertexCount, 2));*/
+		double d = (edgeCount * 1.0)/(Math.pow(vertexCount, 2));
 		
 		return Double.valueOf(df.format(d));
 	}
@@ -192,7 +197,7 @@ private static double density(int edgeCount, int vertexCount) {
 		for (Set<String> ss : ls) {
 			// Set ss = ls.get(1);
 			double percent = ((ss.size()) * 100.00) / totalVertice;
-			int nodeSize = (int) ((percent / 100) * 4000000);
+			int nodeSize = (int) ((percent / 100) * 2000000);
 			
 			Graph<String, DefaultEdge> subGraph1 = createSubGraph(ss);
 			int edgeCount = subGraph1.edgeSet().size();
@@ -209,7 +214,6 @@ private static double density(int edgeCount, int vertexCount) {
 				joChild.put("totalNodes", ss.size());
 				joChild.put("totalEdges", edgeCount);
 				joChild.put("density", density(edgeCount,ss.size()));
-				//joChild.put("totalTime", timeElapsed);
 
 				jAry.put(joChild);
 				sccMap.put(id, ss);
@@ -348,12 +352,9 @@ private static double density(int edgeCount, int vertexCount) {
 	private static Graph<String, DefaultEdge> createSubGraph(Set<String> ss) {
 
 		Graph<String, DefaultEdge> subgraph = null;
-		// ArrayList<Graph<String, DefaultEdge>> subGraphList = new
-		// ArrayList<Graph<String, DefaultEdge>>();
 
 		// for (Set<String> ss : ls) {
 		subgraph = GraphTypeBuilder
-				// .undirected()
 				.directed().allowingMultipleEdges(true).allowingSelfLoops(true)
 				.vertexSupplier(SupplierUtil.createStringSupplier())
 				.edgeSupplier(SupplierUtil.createDefaultEdgeSupplier()).buildGraph();
@@ -407,14 +408,15 @@ private static double density(int edgeCount, int vertexCount) {
 
 
 
-	public Object preprocessEdge(byte[] fileData, FormSub form) {
-		Instant start = Instant.now();
+	public JSONArray preprocessEdge(byte[] fileData, FormSub form) {
 
 		graph1 = GraphTypeBuilder
-				// .undirected()
 				.directed().allowingMultipleEdges(true).allowingSelfLoops(true)
 				.vertexSupplier(SupplierUtil.createStringSupplier())
-				// .edgeSupplier(SupplierUtil.createDefaultWeightedEdgeSupplier())
+				.edgeClass(DefaultWeightedEdge.class).weighted(true).buildGraph();
+		graph1Copy = GraphTypeBuilder
+				.directed().allowingMultipleEdges(true).allowingSelfLoops(true)
+				.vertexSupplier(SupplierUtil.createStringSupplier())
 				.edgeClass(DefaultWeightedEdge.class).weighted(true).buildGraph();
 
 		K_start = form.getK_start1();
@@ -424,7 +426,6 @@ private static double density(int edgeCount, int vertexCount) {
 		VERTEX_PERCENTAGE = form.getVERTEX_PERCENTAGE();
 		WEIGHT_THRESHOLD = form.getWEIGHT_THRESHOLD();
 
-		// byte[] fileData = form.getFile1();
 		InputStream is = null;
 		BufferedReader bfReader = null;
 		try {
@@ -432,14 +433,17 @@ private static double density(int edgeCount, int vertexCount) {
 			bfReader = new BufferedReader(new InputStreamReader(is));
 			String temp = null;
 			while ((temp = bfReader.readLine()) != null) {
-				// System.out.println(temp);
 				String[] s = temp.split("\\s+");
-				// System.out.println("s : "+s.length);
-				// System.out.println("s[0] : "+s[0]);
 				graph1.addVertex(s[0]);
 				graph1.addVertex(s[1]);
 				graph1.addEdge(s[0], s[1]);
 				graph1.setEdgeWeight(s[0], s[1], 0.0);
+				
+				//copy
+				graph1Copy.addVertex(s[0]);
+				graph1Copy.addVertex(s[1]);
+				graph1Copy.addEdge(s[0], s[1]);
+				graph1Copy.setEdgeWeight(s[0], s[1], 0.0);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -455,25 +459,23 @@ private static double density(int edgeCount, int vertexCount) {
 		// Delete edges
 		Graph<String, DefaultWeightedEdge> subgraph = deleteEdge(graph1);
 
-		// Instant finish = Instant.now();
-		// long timeElapsed = Duration.between(start, finish).toMillis(); // in millis
-		// System.out.println(" *****total time in millis:" + timeElapsed);
-
 		// check weakly connected component in original graph
-		ConnectivityInspector<String, DefaultWeightedEdge> ci = new ConnectivityInspector<>(subgraph);
-		List<Set<String>> ls = ci.connectedSets();
+		//ConnectivityInspector<String, DefaultWeightedEdge> ci = new ConnectivityInspector<>(subgraph);
+		//List<Set<String>> ls = ci.connectedSets();
 
 		// create jsonArray
 		JSONArray jAry = new JSONArray();
-		for (Set<String> s : ls) {
+		//for (Set<String> s : ls) {
 			
-			if (s.size() > 50) {
+		//	if (s.size() > MIN_SCC_SIZE) {//keep more
 
-				Graph<String, DefaultWeightedEdge> sgraph = createSubGraph1(s);// from original graph
+				//Graph<String, DefaultWeightedEdge> sgraph = createSubGraph1(s);// from original graph
 
 				// kcore
-				deleteNodes1(sgraph);
-				List<Set<String>> lsedge = getConnectedComponentsList1(sgraph);
+				//deleteNodes1(sgraph);
+				//List<Set<String>> lsedge = getConnectedComponentsList1(sgraph);
+				deleteNodes1(subgraph);
+				List<Set<String>> lsedge = getConnectedComponentsList1(subgraph);
 				
 				JSONObject joChild;
 				depth = 1;
@@ -482,6 +484,10 @@ private static double density(int edgeCount, int vertexCount) {
 
 				for (Set<String> ss : lsedge) {
 					// Set ss = ls.get(1);
+					Graph<String, DefaultWeightedEdge> subGraph = createSubGraph1(ss);
+					int edgeCount = subGraph.edgeSet().size();
+					System.out.println(" @@@ edgecount : "+ edgeCount);
+					
 					if (ss.size() > MIN_SCC_SIZE) {// check diff b/w first and second SCC
 						joChild = new JSONObject();
 
@@ -489,6 +495,10 @@ private static double density(int edgeCount, int vertexCount) {
 						joChild.put("size", 600000);//1000000
 						joChild.put("depth", depth);
 						joChild.put("id", id);
+						
+						joChild.put("totalNodes", ss.size());
+						joChild.put("totalEdges", edgeCount);
+						joChild.put("density", density(edgeCount,ss.size()));
 
 						jAry.put(joChild);
 						sccMap.put(id, ss);
@@ -498,8 +508,8 @@ private static double density(int edgeCount, int vertexCount) {
 				}
 				depth++;
 
-			} // if end
-		}
+		//	} // if end
+	//	}//first for commented
 		
 		return jAry;
 
@@ -564,7 +574,7 @@ private static double density(int edgeCount, int vertexCount) {
 			}
 			// i++;
 		}
-		System.out.println(" @@@ edgecount : "+ edgeCount);
+	//	System.out.println(" @@@ edgecount : "+ edgeCount);
 		// find median of edge weight
 		// double median = findMedian(weight, graph.edgeSet().size());
 		double median = findMedian(weight, edgeCount);
@@ -600,21 +610,19 @@ private static double density(int edgeCount, int vertexCount) {
 		Graph<String, DefaultWeightedEdge> subgraph = null;
 
 		subgraph = GraphTypeBuilder
-				// .undirected()
 				.directed().allowingMultipleEdges(true).allowingSelfLoops(true)
 				.vertexSupplier(SupplierUtil.createStringSupplier())
-				// .edgeSupplier(SupplierUtil.createDefaultEdgeSupplier()).
 				.edgeClass(DefaultWeightedEdge.class).weighted(true).buildGraph();
 
 		for (Object se : ss) {
 			// System.out.println("*********vertex : "+ String.valueOf(se));
 			subgraph.addVertex(String.valueOf(se));
 
-			Set<DefaultWeightedEdge> edg = graph1.edgesOf(String.valueOf(se));
+			Set<DefaultWeightedEdge> edg = graph1Copy.edgesOf(String.valueOf(se));
 			for (Object s : edg) {
 				// System.out.println(" s : "+ s);
-				String u = graph1.getEdgeSource((DefaultWeightedEdge) s);
-				String v = graph1.getEdgeTarget((DefaultWeightedEdge) s);
+				String u = graph1Copy.getEdgeSource((DefaultWeightedEdge) s);
+				String v = graph1Copy.getEdgeTarget((DefaultWeightedEdge) s);
 
 				if (ss.contains(u) && ss.contains(v) && subgraph.containsVertex(u) && subgraph.containsVertex(v)) {
 					subgraph.addEdge(u, v);
@@ -784,7 +792,11 @@ private static double density(int edgeCount, int vertexCount) {
 			// Set ss = ls.get(1);
 			double percent = ((ss.size()) * 100.00) / totalVertice;
 			int nodeSize = (int) ((percent / 100) * 1000000);//4000000
-
+			
+			Graph<String, DefaultWeightedEdge> subGraph1 = createSubGraph1(ss);
+			int edgeCount = subGraph1.edgeSet().size();
+			System.out.println(" @@@ edgecount : "+ edgeCount);
+			
 			idKMap.put(id, Kcore);// Kcore to be used next time this id is clicked
 			if (ss.size() > MIN_SCC_SIZE) {// check diff b/w first and second SCC
 				joChild = new JSONObject();
@@ -793,6 +805,11 @@ private static double density(int edgeCount, int vertexCount) {
 				joChild.put("size", nodeSize);
 				joChild.put("depth", depth);
 				joChild.put("id", id);
+				
+				joChild.put("totalNodes", ss.size());
+				joChild.put("totalEdges", edgeCount);
+				joChild.put("density", density(edgeCount,ss.size()));
+				//m
 
 				jAry.put(joChild);
 				sccMap.put(id, ss);
@@ -813,10 +830,6 @@ private static double density(int edgeCount, int vertexCount) {
 	
 	private void deleteNodesInSubgraph1(Graph<String, DefaultWeightedEdge> sgraph) {
 		System.out.println("**Inside deleteNodesInSubgraph method***");
-		// System.out.println("*SUBGRAPH** BEFORE vertex set of sgraph : " +
-		// sgraph.vertexSet().size());
-		// System.out.println("*SUBGRAPH** BEFORE edge set of sgraph : " +
-		// sgraph.edgeSet().size());
 
 		Graph<String, DefaultWeightedEdge> graph = sgraph;
 		score = countDegree1(graph);

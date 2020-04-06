@@ -99,8 +99,17 @@ public class graphController {
 	}
 
 	private ModelAndView edgeweight(MultipartFile file, FormSub formSub,ModelMap model) {
+		Instant start = Instant.now();
 		try {
-			model.addAttribute("nodes", graphService.preprocessEdge(file.getBytes(),formSub));
+			JSONArray jAry = new JSONArray();
+			jAry = graphService.preprocessEdge(file.getBytes(),formSub);
+			
+			Instant finish = Instant.now();
+			long timeElapsed = Duration.between(start, finish).toMillis(); // in millis
+			
+			model.addAttribute("nodes", jAry);
+			model.addAttribute("totalTime",timeElapsed);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

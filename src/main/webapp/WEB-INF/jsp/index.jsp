@@ -129,7 +129,7 @@ div.tooltip {
 	 </p>
 	
 		<div id="myDiv" class="container panel">
-			<form:form enctype="multipart/form-data" action="/index" method="post" modelAttribute="myformSub">
+			<form:form name="myForm" enctype="multipart/form-data" action="/index" method="post" modelAttribute="myformSub" onsubmit="return validateForm()">
 				<div class="form-group">
 
 					<div class="form-group">
@@ -262,8 +262,39 @@ div.tooltip {
 	    	$(".panel").toggle();
 	    });
 	    
+	    //validateForm
+	    
 	});
 		
+	function validateForm() {
+		var x_file1 = document.forms["myForm"]["file1"].value;
+		  if (x_file1 == "") {
+		    alert("Please select one File! ");
+		    return false;
+		  }
+		  
+		  var x_K_start = document.forms["myForm"]["K_start"].value;
+		  if (x_K_start == "") {
+		    alert("K_start must be filled out");
+		    return false;
+		  }
+		  var x_K_increment = document.forms["myForm"]["K_increment"].value;
+		  if (x_K_increment == "") {
+		    alert("K_increment must be filled out");
+		    return false;
+		  }
+		  var x_MIN_SCC_SIZE = document.forms["myForm"]["MIN_SCC_SIZE"].value;
+		  if (x_MIN_SCC_SIZE == "") {
+		    alert("MIN_SCC_SIZE must be filled out");
+		    return false;
+		  }
+		  var x_DELETED_NODE_PERCENT = document.forms["myForm"]["DELETED_NODE_PERCENT"].value;
+		  if (x_DELETED_NODE_PERCENT == "") {
+		    alert("DELETED_NODE_PERCENT must be filled out");
+		    return false;
+		  }
+		}
+	
 	var group = [];var totalTime;
 	//kcore
     	function showSubNodes(nodeId, approach) {
@@ -305,6 +336,10 @@ div.tooltip {
     		        complete : function(data) {
     		            console.log("edgeweight : "+ data.responseText);
     		            nodesChild = data;
+    		            console.log("Time Takne : "+data.responseJSON.totalTime);
+    		            totalTime = data.responseJSON.totalTime;
+    		            
+    		            document.getElementById('timeMessage').innerHTML = totalTime;
     		        }
     		    });
     		 $.ajax({
