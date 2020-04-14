@@ -9,10 +9,7 @@ import javax.validation.Valid;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.myproj.model.FormSub;
-import org.myproj.services.GraphEdgeWeightService;
 import org.myproj.services.GraphService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -29,7 +26,7 @@ public class graphController {
 
 	public GraphService graphService;
 	
-	@Autowired
+	
 	public graphController(GraphService graphService) {
 		this.graphService = graphService;
 	}

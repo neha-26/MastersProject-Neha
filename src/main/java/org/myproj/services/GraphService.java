@@ -115,7 +115,7 @@ public class GraphService {
 		JSONObject joChild;
 		depth = 1;
 		id = 1;
-		idKMap.put(id, Kcore);
+		//idKMap.put(id, Kcore);
 
 		for (Set<String> ss : ls) {
 			
@@ -123,6 +123,7 @@ public class GraphService {
 			Graph<String, DefaultEdge> subGraph = createSubGraph(ss);
 			int edgeCount = subGraph.edgeSet().size();
 			
+			idKMap.put(id, Kcore);
 			if (ss.size() > MIN_SCC_SIZE) {// check diff b/w first and second SCC
 				joChild = new JSONObject();
 
@@ -162,7 +163,7 @@ public class GraphService {
 	}
 
 	public Integer[] getGroup() {
-		System.out.println(" SIZE##@@@@ : " + group.size());
+		//System.out.println(" SIZE##@@@@ : " + group.size());
 		Integer[] a = new Integer[group.size()];
 
 		for (int i = 0; i < group.size(); i++) {
@@ -303,6 +304,9 @@ public class GraphService {
 
 		Kcore = k;
 		// return graph;
+		if(count == 0) {
+			deleteNodesInSubgraph(sgraph);
+		}
 
 	}
 
@@ -480,14 +484,15 @@ public class GraphService {
 				JSONObject joChild;
 				depth = 1;
 				id = 1;
-				idKMap.put(id, Kcore);
+				//idKMap.put(id, Kcore);
 
 				for (Set<String> ss : lsedge) {
 					// Set ss = ls.get(1);
 					Graph<String, DefaultWeightedEdge> subGraph = createSubGraph1(ss);
 					int edgeCount = subGraph.edgeSet().size();
-					System.out.println(" @@@ edgecount : "+ edgeCount);
+					//System.out.println(" @@@ edgecount : "+ edgeCount);
 					
+					idKMap.put(id, Kcore);
 					if (ss.size() > MIN_SCC_SIZE) {// check diff b/w first and second SCC
 						joChild = new JSONObject();
 
@@ -614,28 +619,30 @@ public class GraphService {
 				.vertexSupplier(SupplierUtil.createStringSupplier())
 				.edgeClass(DefaultWeightedEdge.class).weighted(true).buildGraph();
 
-		for (Object se : ss) {
-			// System.out.println("*********vertex : "+ String.valueOf(se));
-			subgraph.addVertex(String.valueOf(se));
+		if (ss.size() > MIN_SCC_SIZE) {
+			for (Object se : ss) {
+				// System.out.println("*********vertex : "+ String.valueOf(se));
+				subgraph.addVertex(String.valueOf(se));
 
-			Set<DefaultWeightedEdge> edg = graph1Copy.edgesOf(String.valueOf(se));
-			for (Object s : edg) {
-				// System.out.println(" s : "+ s);
-				String u = graph1Copy.getEdgeSource((DefaultWeightedEdge) s);
-				String v = graph1Copy.getEdgeTarget((DefaultWeightedEdge) s);
+				Set<DefaultWeightedEdge> edg = graph1Copy.edgesOf(String.valueOf(se));
+				for (Object s : edg) {
+					// System.out.println(" s : "+ s);
+					String u = graph1Copy.getEdgeSource((DefaultWeightedEdge) s);
+					String v = graph1Copy.getEdgeTarget((DefaultWeightedEdge) s);
 
-				if (ss.contains(u) && ss.contains(v) && subgraph.containsVertex(u) && subgraph.containsVertex(v)) {
-					subgraph.addEdge(u, v);
+					if (ss.contains(u) && ss.contains(v) && subgraph.containsVertex(u) && subgraph.containsVertex(v)) {
+						subgraph.addEdge(u, v);
+					}
 				}
 			}
-		}
 
-		// System.out.println("SIZE of vertex set of subgraph : " +
-		// subgraph.vertexSet().size());
+			System.out.println("SIZE of vertex set of subgraph : " + subgraph.vertexSet().size());
 
-		// System.out.println("SIZE of edge set of subgraph : " +
-		// subgraph.edgeSet().size());
+			System.out.println("SIZE of edge set of subgraph : " + subgraph.edgeSet().size());
+			// System.out.println(" edge set of subgraph : "+ subgraph.edgeSet());
+		} // if ends
 
+		// }
 		return subgraph;
 	}
 	
@@ -795,7 +802,7 @@ public class GraphService {
 			
 			Graph<String, DefaultWeightedEdge> subGraph1 = createSubGraph1(ss);
 			int edgeCount = subGraph1.edgeSet().size();
-			System.out.println(" @@@ edgecount : "+ edgeCount);
+			//System.out.println(" @@@ edgecount : "+ edgeCount);
 			
 			idKMap.put(id, Kcore);// Kcore to be used next time this id is clicked
 			if (ss.size() > MIN_SCC_SIZE) {// check diff b/w first and second SCC
@@ -863,6 +870,9 @@ public class GraphService {
 
 		Kcore = k;
 		// return graph;
+		if(count == 0) {
+			deleteNodesInSubgraph1(sgraph);
+		}
 
 	}
 
